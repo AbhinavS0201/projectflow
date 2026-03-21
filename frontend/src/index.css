@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-deep: #080c14;
+  --bg-surface: #0d1220;
+  --bg-card: #111827;
+  --border: rgba(255,255,255,0.06);
+  --border-active: rgba(99,179,237,0.3);
+  --accent-blue: #3b82f6;
+  --accent-violet: #8b5cf6;
+  --accent-cyan: #06b6d4;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-emerald: #10b981;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-deep);
+  color: #f0f4ff;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(30px,-20px) scale(1.05); }
+  66%      { transform: translate(-20px,30px) scale(0.95); }
+}
+
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform: scale(1); }
+  50%      { opacity:0.4; transform: scale(1.4); }
+}
+
+.font-display { font-family: 'Syne', sans-serif; }
+
+.page-enter { animation: slideUp 0.25s cubic-bezier(0.4,0,0.2,1) both; }
+
+.orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(120px); opacity: 0.1; pointer-events: none;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+
+/* Drag ghost */
+.task-card-dragging {
+  opacity: 0.45;
+  transform: rotate(2deg) scale(0.97);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
+}
+
+/* Drop zone highlight */
+.drop-active {
+  background: rgba(59,130,246,0.06) !important;
+  border-color: rgba(59,130,246,0.25) !important;
+}
