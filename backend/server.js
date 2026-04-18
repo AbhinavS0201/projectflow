@@ -16,7 +16,7 @@ const { initSocket } = require('./src/socket/socketHandler');
 const errorHandler = require('./src/middleware/errorHandler');
 const rateLimiter = require('./src/middleware/rateLimiter');
 
-// Route imports
+// Routes
 const authRoutes = require('./src/routes/auth');
 const projectRoutes = require('./src/routes/projects');
 const taskRoutes = require('./src/routes/tasks');
@@ -24,33 +24,58 @@ const chatRoutes = require('./src/routes/chat');
 const memberRoutes = require('./src/routes/members');
 const analyticsRoutes = require('./src/routes/analytics');
 
-// Connect to MongoDB
+// Connect DB
 connectDB();
 
 const app = express();
 const httpServer = http.createServer(app);
 
-// ─── Socket.io ─────────────────────────────
+// ============================================
+// ✅ CORS FIX (IMPORTANT)
+// ============================================
+
+const allowedOrigins = [
+  "http://localhost:5173",
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    // Allow localhost
+    if (origin.includes("localhost")) {
+      return callback(null, true);
+    }
+
+    // Allow ALL Vercel deployments
+    if (origin.includes("vercel.app")) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
+
+// ============================================
+// Socket.io
+// ============================================
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    credentials: true,
+    origin: "*", // socket is fine with wildcard
+    methods: ["GET", "POST"],
   },
 });
 
-// Attach io to requests so controllers can emit events
 app.set('io', io);
-
-// Initialize socket handler
 initSocket(io);
 
-// ─── Middleware ─────────────────────────────
+// ============================================
+// Middleware
+// ============================================
+
 app.use(helmet());
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true,
-}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(mongoSanitize());
@@ -63,7 +88,10 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', rateLimiter.authLimiter);
 app.use('/api', rateLimiter.apiLimiter);
 
-// ─── Routes ─────────────────────────────────
+// ============================================
+// Routes
+// ============================================
+
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
@@ -71,7 +99,10 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
+// ============================================
 // Health check
+// ============================================
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -81,16 +112,29 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 404
+// ============================================
+// 404 Handler
+// ============================================
+
 app.use('*', (req, res) => {
-  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
 });
 
-// Error handler (must be last)
+// ============================================
+// Error handler
+// ============================================
+
 app.use(errorHandler);
 
-// ─── Start Server ───────────────────────────
+// ============================================
+// Start Server
+// ============================================
+
 const PORT = process.env.PORT || 5000;
+
 httpServer.listen(PORT, () => {
   console.log(`\n🚀 ProjectFlow Server running on port ${PORT}`);
   console.log(`   Mode: ${process.env.NODE_ENV || 'development'}`);
@@ -98,8 +142,11 @@ httpServer.listen(PORT, () => {
   console.log(`   Health: http://localhost:${PORT}/api/health\n`);
 });
 
-// Handle unhandled promise rejections
+// ============================================
+// Handle crashes
+// ============================================
+
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err.message);
+  console.error('❌ Unhandled Promise Rejection:', err.message);
   httpServer.close(() => process.exit(1));
 });
